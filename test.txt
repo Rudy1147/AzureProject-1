@@ -1,0 +1,10 @@
+curl -X 'POST' \
+  'http://localhost:8081/logs' \
+  -H 'accept: application/json' \
+  -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJlbmdpbmVlcl9hbHBoYSIsImlhdCI6MTc4MjQ5MTU1NS4wODMzNjQsImV4cCI6MTc4MjQ5MzM1NS4wODMzNjR9.sVTwnEgIIqXdn7D1GRHR88zsvehlpEpEghy47OXOJhI' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "host": "0.0.0.0",
+  "severity": "ERROR",
+  "message": "Unable to connect"
+}'
