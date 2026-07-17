@@ -87,9 +87,11 @@ class SystemLogDAO:
 
             # Map elements into a structured payload list of dictionaries
             return [{"host": row[0], "severity": row[1], "message": row[2]} for row in records]
+        except DatabaseConnectionError:
+            raise
         except Exception as err:
             logging.error(f"Retrieval failure across data layers: {err}")
-            return []
+            raise DatabaseConnectionError("Failed to retrieve logs from the database.")
         finally:
             if cursor: cursor.close()
             if connection: connection.close()
