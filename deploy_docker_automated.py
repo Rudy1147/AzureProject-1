@@ -23,6 +23,11 @@ def main():
     vm_name = input("Enter VM Name [vm-appserver-prod-01]: ").strip() or "vm-appserver-prod-01"
     location = input("Enter Region [canadaeast]: ").strip() or "canadaeast"
     port = "8081"
+    # Added new variables for VNet, Subnet, and NSG names
+    vnet_name = f"{vm_name}-vnet"
+    subnet_name = "backend-subnet"
+    nsg_name = f"{vm_name}-nsg"
+
 
     print(f"\nConfiguration:")
     print(f"- Resource Group: {rg_name}")
@@ -42,6 +47,32 @@ def main():
 
     if not vm_check_output:
         print(f"VM {vm_name} not found. Provisioning now...")
+
+        # This is part of Requirement 2
+        print("=== 3. Creating Virtual Network ===")
+
+        create_vnet_cmd = [
+            "az", "network", "vnet", "create",
+            "--resource-group", rg_name,
+            "--name", vnet_name,
+            "--location", location,
+            "--address-prefix", "10.0.0.0/16",
+            "--subnet-name", subnet_name,
+            "--subnet-prefix", "10.0.1.0/24",
+            "--output", "table"
+        ]
+        run_az_command(create_vnet_cmd)
+
+        create_nsg_cmd = [
+            "az", "network", "nsg", "create",
+            "--resource-group", rg_name,
+            "--name", nsg_name,
+            "--location", location,
+            "--output", "table"
+        ]
+        run_az_command(create_nsg_cmd)
+
+
         create_vm_cmd = [
             "az", "vm", "create", 
             "--resource-group", rg_name,
@@ -50,6 +81,9 @@ def main():
             "--size", "Standard_B2ats_v2",
             "--storage-sku", "Standard_LRS",
             "--boot-diagnostics-storage", "",
+            "--vnet-name", vnet_name,
+            "--subnet", subnet_name,
+            "--nsg", nsg_name,
             "--admin-username", "azureuser",
             "--generate-ssh-keys",
             "--location", location,
@@ -64,7 +98,7 @@ def main():
     create_nsg_cmd = [
         "az", "network", "nsg", "rule", "create",
         "--resource-group", rg_name,
-        "--nsg-name", f"{vm_name}NSG",
+        "--nsg-name", nsg_name,
         "--name", "Allow_8081_Inbound",
         "--priority", "1010",
         "--destination-port-ranges", port,
