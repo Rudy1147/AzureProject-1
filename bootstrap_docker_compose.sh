@@ -6,7 +6,7 @@ apt-get update -y
 apt-get install -y docker.io docker-compose-v2 docker-buildx git
 systemctl enable --now docker
 
-rm -rf /home/azureuser/AzureProject-0
+rm -rf /home/azureuser/AzureProject-1
 git clone https://github.com/Rudy1147/AzureProject-1.git /home/azureuser/AzureProject-1
 
 cd /home/azureuser/AzureProject-1
