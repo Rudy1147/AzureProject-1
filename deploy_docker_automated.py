@@ -6,7 +6,8 @@ def run_az_command(command_list):
     """Utility function to safely execute an Azure CLI command array"""
     print(f"Executing: {' '.join(command_list)}")
     try:
-        result = subprocess.run(command_list, check=True, text=True, capture_output=True)
+        # Edited to include encoding and errors parameters to handle potential encoding issues
+        result = subprocess.run(command_list, check=True, text=True, capture_output=True, encoding="utf-8", errors="replace",)
         if result.stdout:
             print(result.stdout)
         return result.stdout
