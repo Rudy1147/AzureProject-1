@@ -1,7 +1,7 @@
 {
-    "location": "__LOCATION__",
+    "location": "canadaeast",
     "properties": {
-        
+
         "dataSources": {
             "logFiles": [
                 {
@@ -20,12 +20,12 @@
         "destinations": {
             "logAnalytics": [
                 {
-                    "workspaceResourceId": "__WORKSPACE_ID__",
+                    "workspaceResourceId": "/subscriptions/c16c7388-db07-461e-b012-b977c33ffebb/resourceGroups/VMTest1/providers/Microsoft.OperationalInsights/workspaces/VMTest2-logs",
                     "name": "logDestination"
                 }
             ]
         },
-
+        
         "dataFlows": [
             {
                 "streams": [

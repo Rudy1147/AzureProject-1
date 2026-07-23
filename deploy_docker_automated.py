@@ -131,10 +131,10 @@ def main():
 
     print("=== Creating Data Collection Rule ===")
     # Create Data Collection Rule (DCR) to collect custom container log files
-    dcr_file = os.path.join(script_dir, "dcr.json")
     # -------------------------------------------------------------------
     # This code snippet reads the DCR template file, replaces placeholders with actual values, and writes the modified content to a new DCR file.
-    template_file = os.path.join(script_dir, "dcr_template.json")
+    dcr_file = "dcr.json"
+    template_file = "dcr_template.json"
     with open(template_file, "r") as f:
         dcr_contents = f.read()
     dcr_contents = dcr_contents.replace("__WORKSPACE_ID__", workspace_id).replace("__LOCATION__", location)
