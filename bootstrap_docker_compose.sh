@@ -3,15 +3,14 @@ set -e
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
-apt-get install -y docker.io docker-compose-v2 docker-buildx git
+apt-get install -y docker.io docker-compose-v2 docker-buildx git rsyslog
 systemctl enable --now docker
+systemctl enable --now rsyslog
 
 rm -rf /home/azureuser/AzureProject-1
 git clone https://github.com/Rudy1147/AzureProject-1.git /home/azureuser/AzureProject-1
 
 cd /home/azureuser/AzureProject-1
-# This is to ensure that the logs directory exists before starting the containers.
-mkdir -p /var/log/AzureProject-1
 
 docker compose up -d --build
 
@@ -25,9 +24,9 @@ docker compose logs api
 docker compose logs nginx
 
 # This is to redirect the logs of each service to a separate log file in /var/log/AzureProject-1 directory.
-docker logs -f api_service >> /var/log/AzureProject-1/api.log 2>&1 &
-docker logs -f auth_service >> /var/log/AzureProject-1/auth.log 2>&1 &
-docker logs -f load_balancer >> /var/log/AzureProject-1/nginx.log 2>&1 &
+docker logs -f api_service 2>&1 | logger -t api_service &
+docker logs -f auth_service 2>&1 | logger -t auth_service &
+docker logs -f load_balancer 2>&1 | logger -t nginx_service &
 
 sleep 25
 curl -I http://localhost:8081/logs || curl -I http://localhost:8081/
