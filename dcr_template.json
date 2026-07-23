@@ -3,16 +3,18 @@
     "properties": {
 
         "dataSources": {
-            "logFiles": [
+            "syslog": [
                 {
-                    "name": "ContainerLogs",
+                    "name": "SyslogDataSource",
                     "streams": [
-                        "Custom-ContainerLogs"
+                        "Microsoft-Syslog"
                     ],
-                    "filePatterns": [
-                        "/var/log/AzureProject-1/*.log"
+                    "facilityNames": [
+                        "*"
                     ],
-                    "format": "text"
+                    "logLevels": [
+                        "*"
+                    ]
                 }
             ]
         },
@@ -29,7 +31,7 @@
         "dataFlows": [
             {
                 "streams": [
-                    "Custom-ContainerLogs"
+                    "Microsoft-Syslog"
                 ],
                 "destinations": [
                     "logDestination"
