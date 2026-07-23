@@ -23,10 +23,12 @@ def main():
     vm_name = input("Enter VM Name [vm-appserver-prod-01]: ").strip() or "vm-appserver-prod-01"
     location = input("Enter Region [canadaeast]: ").strip() or "canadaeast"
     port = "8081"
-    # Added new variables for VNet, Subnet, and NSG names
+    # Added new variables for VNet, Subnet, Workspace, DCR, and NSG names
     vnet_name = f"{vm_name}-vnet"
     subnet_name = "backend-subnet"
     nsg_name = f"{vm_name}-nsg"
+    workspace_name = f"{vm_name}-logs"
+    dcr_name = f"{vm_name}-dcr"
 
 
     print(f"\nConfiguration:")
@@ -92,6 +94,102 @@ def main():
         run_az_command(create_vm_cmd)
     else:
         print(f"VM {vm_name} already exists")
+    # Moved script_dir to avoid redundancy
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # ---------------------------------------------------------------------------------------------------
+    # Added for Requirement 3: Create Log Analytics Workspace and DCR, and install Azure Monitor Agent
+    print("=== Creating Log Analytics Workspace ===")
+    create_workspace_cmd = [
+        "az", "monitor", "log-analytics", "workspace", "create",
+        "--resource-group", rg_name,
+        "--workspace-name", workspace_name,
+        "--location", location,
+        "--output", "table"
+    ]
+    run_az_command(create_workspace_cmd)
+
+    # Retrieve the Workspace ID for later use in the DCR creation
+    workspace_id_cmd = [
+        "az", "monitor", "log-analytics", "workspace", "show",
+        "--resource-group", rg_name,
+        "--workspace-name", workspace_name,
+        "--query", "id", "-o", "tsv"
+    ]
+    workspace_id = run_az_command(workspace_id_cmd).strip()
+
+    # Install Azure Monitor Agent on the VM
+    print("=== Installing Azure Monitor Agent ===")
+    A_Monitor_Agent_cmd = [
+        "az", "vm", "extension", "set",
+        "--resource-group", rg_name,
+        "--vm-name", vm_name,
+        "--publisher", "Microsoft.Azure.Monitor",
+        "--name", "AzureMonitorLinuxAgent"
+    ]
+    run_az_command(A_Monitor_Agent_cmd)
+
+    print("=== Creating Data Collection Rule ===")
+    # Create Data Collection Rule (DCR) to collect custom container log files
+    dcr_file = os.path.join(script_dir, "dcr.json")
+    # -------------------------------------------------------------------
+    # This code snippet reads the DCR template file, replaces placeholders with actual values, and writes the modified content to a new DCR file.
+    template_file = os.path.join(script_dir, "dcr_template.json")
+    with open(template_file, "r") as f:
+        dcr_contents = f.read()
+    dcr_contents = dcr_contents.replace("__WORKSPACE_ID__", workspace_id).replace("__LOCATION__", location)
+    with open(dcr_file, "w") as f:
+        f.write(dcr_contents)
+    # -------------------------------------------------------------------
+    create_dcr_cmd = [
+        "az", "monitor", "data-collection", "rule", "create",
+        "--resource-group", rg_name,
+        "--name", dcr_name,
+        "--location", location,
+        "--rule-file", dcr_file
+    ]
+    run_az_command(create_dcr_cmd)
+
+    # Retrieve the DCR ID for later use in the Run Command script
+    print("=== Retrieving DCR ID ===")
+    dcr_id_cmd = [
+        "az", "monitor", "data-collection", "rule", "show",
+        "--resource-group", rg_name,
+        "--name", dcr_name,
+        "--query", "id", "-o", "tsv"
+    ]
+    dcr_id = run_az_command(dcr_id_cmd).strip()
+
+    # Retrieve the VM Resource ID for later use in the Run Command script
+    print("=== Retrieving VM Resource ID ===")
+    vm_id_cmd = [
+        "az", "vm", "show",
+        "--resource-group", rg_name,
+        "--name", vm_name,
+        "--query", "id", "-o", "tsv"
+    ]
+    vm_id = run_az_command(vm_id_cmd).strip()
+
+    # Associate the VM with the Data Collection Rule (DCR) to collect custom container log files
+    print("=== Associating VM with Data Collection Rule ===")
+    associate_cmd = [
+        "az", "monitor", "data-collection", "rule", "association", "create",
+        "--association-name", "default",
+        "--rule-id", dcr_id,
+        "--resource", vm_id
+    ]
+    run_az_command(associate_cmd)
+
+    # Verify the association of the VM with the Data Collection Rule (DCR)
+    print("=== Verifying DCR Association ===")
+    verify_cmd = [
+        "az", "monitor", "data-collection", "rule", "association", "list",
+        "--resource", vm_id,
+        "--output", "table"
+    ]
+    run_az_command(verify_cmd)
+
+    # ----------------------------------------------------------------------------------------------------
     
     # 4. Open Port 8081 Inbound
     print("=== 4. Opening NSG Port 8081 Inbound ===")
@@ -112,9 +210,7 @@ def main():
 
     # 5. Read Remote Bootstrap Script from file
     print("=== 5. Reading Remote Bootstrap Script ===")
-    script_dir = os.path.dirname(os.path.abspath(__file__))
     source_bootstrap_path = os.path.join(script_dir, "bootstrap_docker_compose.sh")
-
     if not os.path.exists(source_bootstrap_path):
         print(f"Error, source bootstrap file not found at: {source_bootstrap_path}", file=sys.stderr)
         sys.exit(1)
@@ -144,6 +240,10 @@ def main():
     ]
     vm_ip = run_az_command(get_ip_cmd).strip().replace("\r", "")
     print(f"Deployment Complete: API Endpoint - http://{vm_ip}:{port}")
+    print("\nAzure Monitor Configuration")
+    print(f"Log Analytics Workspace: {workspace_name}")
+    print(f"Data Collection Rule: {dcr_name}")
+    print("Container logs are being forwarded to Azure Monitor.")
 
     print("\n=== 9. How to End/Teardown VM (Cost Control) ===")
     print("To temporarily stop the VM and suspend compute billing (deallocate VM):")

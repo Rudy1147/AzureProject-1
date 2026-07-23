@@ -1,0 +1,40 @@
+{
+    "location": "__LOCATION__",
+    "properties": {
+        
+        "dataSources": {
+            "logFiles": [
+                {
+                    "name": "ContainerLogs",
+                    "streams": [
+                        "Custom-ContainerLogs"
+                    ],
+                    "filePatterns": [
+                        "/var/log/AzureProject-1/*.log"
+                    ],
+                    "format": "text"
+                }
+            ]
+        },
+
+        "destinations": {
+            "logAnalytics": [
+                {
+                    "workspaceResourceId": "__WORKSPACE_ID__",
+                    "name": "logDestination"
+                }
+            ]
+        },
+
+        "dataFlows": [
+            {
+                "streams": [
+                    "Custom-ContainerLogs"
+                ],
+                "destinations": [
+                    "logDestination"
+                ]
+            }
+        ]
+    }
+}
