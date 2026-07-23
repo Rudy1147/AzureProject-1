@@ -19,9 +19,9 @@ docker compose ps
 # This is to debug the containers if they are not running properly.
 # You can check the logs of each service to see if there are any errors or issues that need to be addressed.
 # This can be commented out in production, but it is useful for debugging during development and testing.
-docker compose logs auth
-docker compose logs api
-docker compose logs nginx
+#docker compose logs auth
+#docker compose logs api
+#docker compose logs nginx
 
 # This is to redirect the logs of each service to a separate log file in /var/log/AzureProject-1 directory.
 docker logs -f api_service 2>&1 | logger -t api_service &
