@@ -3,32 +3,50 @@ services:
     image: postgres:15-alpine
     container_name: postgres_backend
     environment:
-      POSTGRES_USER: admin_user
-      POSTGRES_PASSWORD: network_password
-      POSTGRES_DB: metrics_db
-    ports:
-      - "5432:5432"
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
     volumes:
       - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin_user -d metrics_db"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
 
-  web:
-    build: .
-    container_name: python_web_api
+  auth:
+    build: ./auth
+    container_name: auth_service
     ports:
-      - "8081:8081"
+      - "8001:8000"
     environment:
-      - DB_HOST=db
-      - DB_NAME=metrics_db
-      - DB_USER=admin_user
-      - DB_PASSWORD=network_password
+      DB_HOST: db
+      DB_NAME: postgres
+      DB_USER: postgres
+      DB_PASSWORD: secret
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
     depends_on:
-      db:
-        condition: service_healthy
+      - db
+
+  api:
+    build: ./api
+    container_name: api_service
+    ports:
+      - "8002:8000"
+    environment:
+      DB_HOST: db
+      DB_NAME: postgres
+      DB_USER: postgres
+      DB_PASSWORD: secret
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+    depends_on:
+      - db
+
+  nginx:
+    image: nginx:alpine
+    container_name: load_balancer
+    ports:
+      - "8081:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - auth
+      - api
 
 volumes:
   pgdata:
