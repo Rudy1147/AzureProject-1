@@ -98,6 +98,15 @@ def main():
     # Moved script_dir to avoid redundancy
     script_dir = os.path.dirname(os.path.abspath(__file__))
 
+    # 3.1 Assign Managed Identity to the VM
+    # Very important to make dcr work.
+    assign_identity_cmd = [
+        "az", "vm", "identity", "assign",
+        "--resource-group", rg_name,
+        "--name", vm_name
+    ]
+    run_az_command(assign_identity_cmd)
+
     # ---------------------------------------------------------------------------------------------------
     # Added for Requirement 3: Create Log Analytics Workspace and DCR, and install Azure Monitor Agent
     print("=== Creating Log Analytics Workspace ===")
