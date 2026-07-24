@@ -11,7 +11,7 @@ from exceptions import UserRegistrationError, InvalidCredentialsError
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 user_dao = UserDAO()
-app = FastAPI(title="Auth Service")
+app = FastAPI(title="Auth Service", root_path="/auth")
 
 SERVICE_NAME = "auth-service"
 

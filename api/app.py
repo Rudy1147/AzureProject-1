@@ -12,7 +12,7 @@ from exceptions import DatabaseConnectionError, LogCreationError
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 log_dao = SystemLogDAO()
-app = FastAPI(title="API Service")
+app = FastAPI(title="API Service", root_path="/api")
 security = HTTPBearer()
 
 SERVICE_NAME = "api-service"
